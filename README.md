@@ -39,6 +39,29 @@ Workers VPC 目前属于 Beta，接口可能变化。SSH 使用实验性的 [`@w
 {"command":"whoami","timeout_seconds":15}
 ```
 
+调用 `ssh_list_hosts` 获取已注册的主机名，再通过 `ssh_exec` 的 `host` 参数指定主机：
+
+```json
+{"host":"my-laptop","command":"whoami","timeout_seconds":15}
+```
+
+省略 `host` 时使用 `SSH_DEFAULT_HOST` 指定的默认主机。已有单主机配置仍支持原来的调用方式。
+
+### 主机注册管理
+
+注册表保存在本地已忽略的 `wrangler.local.jsonc` 的 `vars.SSH_HOSTS` 中，发布后作为 Worker 配置保存到 Cloudflare。每条记录包含 SSH 用户、可信主机指纹、VPC Tunnel 绑定及私钥 Secret 名称。私钥保存在 Worker Secrets。
+
+```sh
+# 先配置目标 Tunnel，并通过可信入口核对 SSH 主机指纹和专用公钥。
+npx wrangler secret put SSH_KEY_MY_LAPTOP --config wrangler.local.jsonc
+npm run hosts -- register my-laptop --user my-user --tunnel-id <UUID> --host-key SHA256:<FINGERPRINT> --secret SSH_KEY_MY_LAPTOP --default
+npm run hosts -- list
+npm run hosts -- remove my-laptop --default-host other-host
+npm run deploy
+```
+
+`register` 自动创建或复用配置中的 Tunnel 绑定。已有主机的配置发生变化时，使用 `--replace` 明确更新。`remove` 移除注册记录，绑定、Tunnel 和 Secret 保留供其他注册记录或既有调用使用。注册变更在部署后生效。CLI 默认读取 `wrangler.local.jsonc`，可用 `--config` 指定其他配置文件。
+
 MCP 工具名称：`ssh_exec`。返回示例（用户名为示意）：
 
 ```json
