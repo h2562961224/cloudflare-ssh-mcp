@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "hosts": "node scripts/hosts.mjs",
     "check": "tsc --noEmit && wrangler deploy --dry-run --config wrangler.example.jsonc",
     "deploy": "wrangler deploy --config wrangler.local.jsonc",
     "secret:ssh": "wrangler secret put SSH_PRIVATE_KEY --config wrangler.local.jsonc"
